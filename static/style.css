@@ -1,0 +1,31 @@
+body {
+  background-color: #6a4593; /* Aalto darkpurple */
+  font-family: "Nimbus Sans Bold", Arial, Helvetica;
+}
+
+h1 {
+  color: white;
+}
+
+.main {
+  position: absolute;
+  top: 300px;
+  left: 30px;
+}
+
+#prompt {
+  font-size: xx-large;
+  font-weight: bold;
+  color: white;
+}
+
+.promptword.correct {
+  color: #009e69; /* Aalto darkgreen */ 
+}
+
+hr.promptline {
+  color: gray;
+  background-color: gray;
+  border: 0;
+  height: 2px;
+}
