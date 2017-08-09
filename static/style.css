@@ -22,6 +22,12 @@ h1 {
 .promptword.correct {
   color: #009e69; /* Aalto darkgreen */ 
 }
+.promptword.truncated {
+  color: #e37828; /* Aalto darkorange */ 
+}
+.promptword.missed {
+  color: #dd5354; /* Aalto red */ 
+}
 
 hr.promptline {
   color: gray;

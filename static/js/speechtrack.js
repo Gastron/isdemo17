@@ -57,7 +57,8 @@ var dictate = new Dictate({
 
 /* callbacks for dictate */
 function __processHypothesis(hypothesis) {
-  colorPromptByHypothesis(readingPrompt, hypothesis);
+  parsedHypo = parseHypothesis(hypothesis);
+  colorPrompt(readingPrompt, parsedHypo);
 }
 
 function colorPromptByHypothesis(readingPrompt, hypothesis) {
@@ -67,6 +68,53 @@ function colorPromptByHypothesis(readingPrompt, hypothesis) {
     index = parseInt(reresult[1]);
     readingPrompt.getElementAtIndex(index).classList.add('correct');
   }
+}
+
+function colorPrompt(readingPrompt, parsedHypothesis) {
+  for (let index of parsedHypo.correctInds) {
+    readingPrompt.getElementAtIndex(index).classList.add('correct');
+    readingPrompt.getElementAtIndex(index).classList.remove('truncated');
+    readingPrompt.getElementAtIndex(index).classList.remove('missed');
+  }
+  for (let index of parsedHypo.truncInds) {
+    readingPrompt.getElementAtIndex(index).classList.remove('correct');
+    readingPrompt.getElementAtIndex(index).classList.add('truncated');
+    readingPrompt.getElementAtIndex(index).classList.remove('missed');
+  }
+  for (let index of parsedHypo.missedInds) {
+    readingPrompt.getElementAtIndex(index).classList.remove('correct');
+    readingPrompt.getElementAtIndex(index).classList.remove('truncated');
+    readingPrompt.getElementAtIndex(index).classList.add('missed');
+  }
+}
+
+function parseHypothesis(hypothesis) {
+  var parsed = {correctInds: new Set(), truncInds: new Set(), missedInds: new Set(), cursor: 0};
+  var reTruncInds = /(?:^|\s)trunc:[^@]*@([0-9]*)/g;
+  var reCorrectInds = /(?:^|\s)(?!trunc:)[^@]*@([0-9]*)/g;
+  var triedWords = []; 
+  var reresult;
+  while ((reresult = reCorrectInds.exec(hypothesis)) !== null) {
+    index = parseInt(reresult[1]);
+    parsed.correctInds.add(index);
+    parsed.cursor = index;
+    triedWords.push(index);
+  }
+  while ((reresult = reTruncInds.exec(hypothesis)) !== null) {
+    index = parseInt(reresult[1]);
+    if (!parsed.correctInds.has(index)) {
+      parsed.truncInds.add(index);
+      triedWords.push(index);
+    }
+  }
+  triedWords.sort(function (a,b) { return a - b; });
+  triedSet = new Set(triedWords);
+  for (i=0; i < triedWords[triedWords.length-1]; i++) {
+    if (!triedSet.has(i)) {
+      parsed.missedInds.add(i);
+    }
+  }
+  return parsed;
 }
 
 
