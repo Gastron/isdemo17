@@ -28,10 +28,21 @@ h1 {
 .promptword.missed {
   color: #dd5354; /* Aalto red */ 
 }
+.future {
+  opacity: 0.5;
+}
+.past {
+  opacity: 0.7;
+}
+
 
 hr.promptline {
   color: gray;
   background-color: gray;
   border: 0;
   height: 2px;
+}
+
+.blink {
+  background-color: gray;
 }
