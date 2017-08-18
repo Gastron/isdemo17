@@ -1,6 +1,8 @@
 body {
   background-color: #6a4593; /* Aalto darkpurple */
   font-family: "Nimbus Sans Bold", Arial, Helvetica;
+  font-weight: bold;
+  overflow: hidden;
 }
 
 h1 {
@@ -8,14 +10,17 @@ h1 {
 }
 
 .main {
-  position: absolute;
-  top: 300px;
-  left: 30px;
+  padding-right: 30px;
+  padding-left: 30px;
+  position: relative;
+  top: 40%;
+  left: 0px;
+  margin: 0px;
+  border: 0px;
 }
 
 #prompt {
   font-size: xx-large;
-  font-weight: bold;
   color: white;
 }
 
@@ -36,6 +41,50 @@ h1 {
 }
 
 
+.popup {
+  visibility: hidden;
+  position: absolute;
+  z-index: 2;
+  top: -200px;
+  left: 50%;
+  margin-left: -250px;
+  border-radius: 10px;
+  height: 100px;
+  width: 500px;
+  background-color: white;
+  text-align: center;
+}
+.popup.show {
+  visibility: visible;
+  animation: fadeIn 0.3s;
+}
+
+@keyframes fadeInFull {
+  from {opacity: 0;}
+  to {opacity: 1;}
+}
+
+.hider {
+  visibility: hidden;
+  position: absolute;
+  top:0px;
+  left:0px;
+  z-index: 1;
+  background-color: black;
+  opacity: 0.3;
+  border-radius: 10px;
+  margin-left:30px;
+}
+.hider.show {
+  visibility: visible;
+  animation fadeIn 0.3s;
+}
+@keyframes fadeIn {
+  from {opacity: 0;}
+  to {opacity: 0.3;}
+}
+
+
 hr.promptline {
   color: gray;
   background-color: gray;
@@ -45,4 +94,65 @@ hr.promptline {
 
 .blink {
   background-color: gray;
+}
+
+#instruction {
+  padding-left:1em;
+  color: gray;
+}
+
+.teletype {
+  font-family: monospace;
+}
+
+html,body { height: 100%;}
+
+#leftside {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  height: 100%;
+  width: 70%;
+}
+
+#rightside {
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  background-color: #006cb4; /* Aalto blue */
+  background-color: #ab3388; /* Aalto lilac */
+  background-color: #888178; /* Aalto gray */
+  background-color: #f5cb08; /* Aalto yellow */
+  height: 100%;
+  width: 30%;
+  margin: 0px;
+  padding: 0px
+}
+
+.switchcolumn {
+  padding: 30px;
+}
+
+.switcher {
+  background-color: #006cb4; /* Aalto blue */
+  background-color: #6a4593; /* Aalto darkpurple */
+  /* text-align: center;*/
+  color: gray;
+  height: 200px;
+  width: 60%;
+  margin: auto;
+  margin-top: 30px;
+  display: flex;
+  /* justify-content: center; align horizontal */
+  align-items: center; /* align vertical */
+}
+.switcher:hover {
+  background-color: #006cb4; /* Aalto blue */
+  background-color: #ab3388; /* Aalto lilac */
+  color: white;
+
+}
+.switchtext {
+  cursor: default;
+  padding: 20px;
 }

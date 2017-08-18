@@ -1,6 +1,7 @@
 /* State: */
 var speechTracking = false;
 var workerAvailable = false;
+var validating = false;
 var cursorPos = 0;
 var ReadingPrompt = function() {
   var asList = [];
@@ -10,16 +11,12 @@ var ReadingPrompt = function() {
     asList = text.split(/(\s+)/).filter( function(x) {return x.trim().length > 0;});
     asHTMLList = [];
     for (i = 0; i < asList.length; i++) {
-      //var wordDiv = document.createElement('div');
       var spaceSpan = document.createElement('span');
       var wordSpan = document.createElement('span');
       spaceSpan.innerHTML = " ";
       spaceSpan.style["white-space"] = 'pre';
       wordSpan.innerHTML = asList[i];
       wordSpan.classList.add('promptword');
-      //wordDiv.appendChild(spaceSpan);
-      //wordDiv.appendChild(wordSpan);
-      //wordDiv.classList.add('promptword');
       asHTMLList.push({//div: wordDiv, 
         spaceSpan: spaceSpan,
         wordSpan: wordSpan});
@@ -38,7 +35,7 @@ var ReadingPrompt = function() {
     return lastSpace;
   }
 };
-function setPromptDiv(readingPrompt) {
+function setupPromptDiv(readingPrompt) {
   var HTMLList = readingPrompt.getHTMLList();
   var lastSpace = readingPrompt.getLastSpace();
   var promptdiv = document.getElementById("prompt")
@@ -51,20 +48,26 @@ function setPromptDiv(readingPrompt) {
 }
 
 var readingPrompt = new ReadingPrompt();
-readingPrompt.loadText("En dag började solen och vinden bråka om vem av dem som var starkast.")
-setPromptDiv(readingPrompt);
+var prompts = {1: {text: "En dag började solen och vinden bråka om vem av dem som var starkast.",
+                   graph_id: "testphrase"},
+            2: {text: "Hej peter! Jag försökte ringa dig, men din mobil var avstängd. Var är du?! Hoppas att du hör mitt meddelande snart. Eva ligger på sjukhus. Hon råkade ut för en bilolycka i morse, men det är ingen fara med henne.", graph_id: "hejpeter"},
+           3: {text: "Hej Peter! Jag försökte ringa dig.",
+                graph_id: "shorttest"}};
+
 
 var dictate = new Dictate({
   server : "ws://localhost:8888/client/ws/speech",
   serverStatus : "ws://localhost:8888/client/ws/status",
   recorderWorkerPath : 'static/js/recorderWorker.js',
+  graph_id : "testphrase",
   onPartialResults : function(hypos) {
     bestHypothesis = hypos[0].transcript;
     __processHypothesis(bestHypothesis);
   },
   onResults : function(hypos) {
+    setInstruction("Validating.");
     bestHypothesis = hypos[0].transcript;
-    __processHypothesis(bestHypothesis);
+    startValidating(bestHypothesis);
   },
   onServerStatus : function(json) {
     if (json.num_workers_available == 0) {
@@ -74,6 +77,21 @@ var dictate = new Dictate({
     }
   }
 });
+function setupPrompt(number) {
+  //Reset state: 
+  speechTracking = false;
+  validating = false;
+  cursorPos = 0;
+  var hider = document.getElementById('prompthider');
+  hider.classList.remove('show');
+  var popup = document.getElementById('popup');
+  popup.classList.remove('show');
+  readingPrompt.loadText(prompts[number].text);
+  setupPromptDiv(readingPrompt);
+  setInstruction('Press and hold <span class="teletype">&lt;space&gt;</span>');
+  dictate.getConfig()["graph_id"] = prompts[number].graph_id;
+}
+setupPrompt(1);
 
 /* callbacks for dictate */
 function __processHypothesis(hypothesis) {
@@ -83,14 +101,55 @@ function __processHypothesis(hypothesis) {
   blinkCursor();
 }
 
-function colorPromptByHypothesis(readingPrompt, hypothesis) {
-  var reWordIds = /@([0-9]*)/g;
-  var reresult; 
-  while ((reresult = reWordIds.exec(hypothesis)) !== null) {
-    index = parseInt(reresult[1]);
-    readingPrompt.getWordAtIndex(index).classList.add('correct');
-  }
+function startValidating(hypothesis) {
+  validating = true;
+  parsedHypo = parseHypothesis(hypothesis);
+  colorPrompt(readingPrompt, parsedHypo);
+  blinkCursor();
+  var maindiv = document.getElementById("main");
+  var promptline = document.getElementById("promptline");
+  var hider = document.getElementById('prompthider');
+  hider.style.width = promptline.offsetWidth +"px";
+  hider.style.height = maindiv.offsetHeight +"px";
+  hider.classList.add("show");
+  validate(hypothesis, parsedHypo);
 }
+
+function validate(hypothesis, parsedHypothesis) {
+  var HTMLList = readingPrompt.getHTMLList();
+  for (index = 0; index < HTMLList.length; index++) {
+    cls = getReadingClassByIndex(parsedHypothesis, index);
+    if (cls !== 'correct') {
+      console.log("Reject")
+      showRejected('All words were not found');
+      return;
+    }
+  } 
+  console.log("Accept")
+  showAccepted();
+}
+
+function showRejected(reasontext) {
+  var popup = document.getElementById('popup');
+  popup.innerHTML = "";
+  var verdict = document.createElement('div');
+  verdict.innerHTML = '<h2>Utterance rejected</h2>';
+  var reason = document.createElement('div');
+  reason.innerHTML = reasontext;
+  popup.appendChild(verdict);
+  popup.appendChild(reason);
+  popup.classList.add("show");
+}
+
+function showAccepted() {
+  var popup = document.getElementById('popup');
+  popup.innerHTML = "";
+  var verdict = document.createElement('div');
+  verdict.innerHTML = '<h2>Utterance accepted</h2>';
+  popup.appendChild(verdict);
+  popup.classList.add("show");
+}
+
 
 function setReadingClass(element, cls) {
   element.classList.remove('correct');
@@ -202,37 +261,60 @@ function parseHypothesis(hypothesis) {
       parsed.missedInds.add(i);
     }
   }
+  var hyposplit = hypothesis.split(" ")
+  if (hyposplit[hyposplit.length - 1] === "<garbage>") {
+    parsed.truncInds.add(parsed.cursor);
+  }
   return parsed;
 }
 
+function setInstruction(text) {
+  instruction = document.getElementById('instruction');
+  instruction.innerHTML = text;
+}
+
+function startTracking() {
+  if (!workerAvailable) {
+    console.log("Worker not available.");
+    setInstruction("Wait for the recogniser to become ready.");
+    return;
+  }
+  console.log("Starting speech tracking.");
+  try{
+    dictate.startListening();
+    speechTracking = true;
+    __processHypothesis(""); 
+    colorAtStart(readingPrompt);
+    setInstruction("Read the prompt aloud. The speech recogniser tries track you and shows where it predicts you are.")
+  } catch (e) {
+    console.log("Unable to start speech tracking due to error: " +e);
+    speechTracking = false;
+    colorAtEnd(readingPrompt);
+    setInstruction("Could not start speech tracking. Try again?");
+  }
+}
+function stopTracking() {
+  console.log("Stopping speech tracking.");
+  dictate.stopListening();
+  speechTracking = false;
+  colorAtEnd(readingPrompt);
+  setInstruction("Waiting for final recogniser output.")
+}
 
 document.onkeydown = function(evt) {
   evt = evt || window.event;
-  if (evt.keyCode == 32 && !speechTracking) {
-    if (!workerAvailable) {
-      console.log("Worker not available.");
-      return;
-    }
-    console.log("Starting speech tracking.");
-    try{
-      dictate.startListening();
-      speechTracking = true;
-      __processHypothesis(""); 
-      colorAtStart(readingPrompt);
-    } catch (e) {
-      console.log("Unable to start speech tracking due to error: " +e);
-      speechTracking = false;
-      colorAtEnd(readingPrompt);
-    }
+  if (evt.keyCode == 32 && !speechTracking && !validating) {
+    startTracking();
   }
 };
+
 document.onkeyup = function(evt) {
   evt = evt || window.event;
-  if (evt.keyCode == 32 && speechTracking) {
-    console.log("Stopping speech tracking.");
-    dictate.stopListening();
-    speechTracking = false;
-    colorAtEnd(readingPrompt);
+  if (evt.keyCode == 32 && speechTracking && !validating) {
+    stopTracking();
+  }
+  else if (evt.keyCode == 32 && !validating) {
+    setInstruction('Press and hold <span class="teletype">&lt;space&gt;</span>')
   }
 };
 

@@ -7,9 +7,16 @@
     <link rel="stylesheet" href="static/style.css">
   </head>
   <body>
-    <div class="main">
-      {% block main %}
-      <h1>Reading validation for pronunciation evaluation in the Digitala project</h1>
+    <div id="leftside">
+      <div class="main" id="main">
+        {% block main %}
+        <h1>Reading validation for pronunciation evaluation in the Digitala project</h1>
+        {% endblock %}
+      </div>
+    </div>
+    <div id="rightside">
+      {% block side %}
+      Hello
       {% endblock %}
     </div>
   </body>
