@@ -126,27 +126,43 @@ function validate(hypothesis, parsedHypothesis) {
   var garbages = 0;
   var truncations = 0;
   var hypolist = hypothesis.split(/(\s+)/).filter( function(x) {return x.trim().length > 0;});
-  var formattedHypo = '';
-  var latestOccurences = {};
+  var formattedHypo = document.createElement('div');
+  var latestOccurrences = {};
   for (var i = 0; i < hypolist.length; i++) {
     if (hypolist[i] === '<garbage>') {
       garbages += 1;
-      formattedHypo += ' <span class="spn">[spoken noise]</span>'
+      var spanner = document.createElement('span');
+      spanner.innerHTML = '[spoken noise] ';
+      spanner.classList.add('spn');
+      formattedHypo.appendChild(spanner);
       continue
     }
     else if (hypolist[i].split(':')[0] === 'trunc') {
       index = hypolist[i].split('@')[1]
-      formattedHypo += ' <span class="trunc">[truncated ' + readingPrompt.getBareWordAtIndex(index) + ']</span>';
       truncations += 1;
+      var spanner = document.createElement('span');
+      spanner.innerHTML = '[truncated ' + readingPrompt.getBareWordAtIndex(index) + '] ';
+      spanner.classList.add('trunc');
+      formattedHypo.appendChild(spanner);
       continue
     }
     else if (lastcorrect + 1 !== parseInt(hypolist[i].split('@')[1])) {
-      formattedHypo += ' <span class="jump">[jump]</span>';
+      var spanner = document.createElement('span');
+      spanner.innerHTML = '[jump] ';
+      spanner.classList.add('jump');
+      formattedHypo.appendChild(spanner);
       jumps += 1;
     }
-    index = hypolist[i].split('@')[1]
-    formattedHypo += ' <span class="correct">' + readingPrompt.getBareWordAtIndex(index) + '</span>';
-    lastcorrect = parseInt(hypolist[i].split('@')[1]);
+    index = parseInt(hypolist[i].split('@')[1])
+    var spanner = document.createElement('span');
+    spanner.innerHTML = readingPrompt.getBareWordAtIndex(index) + " ";
+    spanner.classList.add('correct');
+    if (latestOccurrences.hasOwnProperty(index)) {
+      latestOccurrences[index].classList.remove('correct');
+    }
+    latestOccurrences[index] = spanner;
+    formattedHypo.appendChild(spanner);
+    lastcorrect = index;
   }
   for (index = 0; index < HTMLList.length; index++) {
     cls = getReadingClassByIndex(parsedHypothesis, index);
@@ -174,17 +190,15 @@ function showRejected(reasontext, formattedHypo) {
   var popup = document.getElementById('popup');
   popup.innerHTML = "";
   var verdict = document.createElement('div');
-  verdict.innerHTML = '<h2>Utterance rejected</h2>';
+  verdict.innerHTML = '<h2 class="boo">Utterance rejected</h2>';
   var reason = document.createElement('div');
   reason.innerHTML = reasontext;
   var line = document.createElement('div');
   line.innerHTML = '<hr class="promptline">';
-  var hypo = document.createElement('div');
-  hypo.innerHTML = formattedHypo;
   popup.appendChild(verdict);
   popup.appendChild(reason);
   popup.appendChild(line);
-  popup.appendChild(hypo);
+  popup.appendChild(formattedHypo);
   popup.classList.add("show");
 }
 
@@ -192,14 +206,12 @@ function showAccepted(formattedHypo) {
   var popup = document.getElementById('popup');
   popup.innerHTML = "";
   var verdict = document.createElement('div');
-  verdict.innerHTML = '<h2>Utterance accepted</h2>';
+  verdict.innerHTML = '<h2 class="yeah">Utterance accepted</h2>';
   var line = document.createElement('div');
   line.innerHTML = '<hr/>';
-  var hypo = document.createElement('div');
-  hypo.innerHTML = formattedHypo;
   popup.appendChild(verdict);
   popup.appendChild(line);
-  popup.appendChild(hypo);
+  popup.appendChild(formattedHypo);
   popup.classList.add("show");
 }
 

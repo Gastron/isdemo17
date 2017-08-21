@@ -77,16 +77,22 @@ input[type=textarea] {
 
 .spn {
   color: #e37828; /* Aalto darkorange */ 
-  color: #dd5354; /* Aalto red */ 
 }
 .trunc {
-  color: #dd5354; /* Aalto red */ 
+  color: #e37828; /* Aalto darkorange */ 
 }
 .jump {
   color: #e37828; /* Aalto darkorange */ 
 }
 .correct {
   color: #009e69; /* Aalto darkgreen */ 
+}
+
+.yeah {
+  color: #009e69; /* Aalto darkgreen */ 
+}
+.boo {
+  color: #dd5354; /* Aalto red */ 
 }
 
 .hider {
