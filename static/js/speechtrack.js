@@ -3,6 +3,7 @@ var speechTracking = false;
 var workerAvailable = false;
 var validating = false;
 var cursorPos = 0;
+var writingCustom = false;
 var ReadingPrompt = function() {
   var asList = [];
   var asHTMLList = [];
@@ -31,6 +32,9 @@ var ReadingPrompt = function() {
   this.getWordAtIndex = function(index) {
     return asHTMLList[index].wordSpan;
   }
+  this.getBareWordAtIndex = function(index) {
+    return asList[index];
+  }
   this.getLastSpace = function() {
     return lastSpace;
   }
@@ -50,9 +54,8 @@ function setupPromptDiv(readingPrompt) {
 var readingPrompt = new ReadingPrompt();
 var prompts = {1: {text: "En dag började solen och vinden bråka om vem av dem som var starkast.",
                    graph_id: "testphrase"},
-            2: {text: "Hej peter! Jag försökte ringa dig, men din mobil var avstängd. Var är du?! Hoppas att du hör mitt meddelande snart. Eva ligger på sjukhus. Hon råkade ut för en bilolycka i morse, men det är ingen fara med henne.", graph_id: "hejpeter"},
-           3: {text: "Hej Peter! Jag försökte ringa dig.",
-                graph_id: "shorttest"}};
+           2: {text: "Taligenkänning kallas processen att elektroniskt eller datatekniskt tolka mänskligt, naturligt tal.", graph_id: "asr"},
+            3: {text: "Hej Peter! Jag försökte ringa dig, men din mobil var avstängd. Var är du?! Hoppas att du hör mitt meddelande snart. Eva ligger på sjukhus. Hon råkade ut för en bilolycka i morse, men det är ingen fara med henne.", graph_id: "hejpeter"}};
 
 
 var dictate = new Dictate({
@@ -82,6 +85,7 @@ function setupPrompt(number) {
   speechTracking = false;
   validating = false;
   cursorPos = 0;
+  writingCustom = false;
   var hider = document.getElementById('prompthider');
   hider.classList.remove('show');
   var popup = document.getElementById('popup');
@@ -106,47 +110,96 @@ function startValidating(hypothesis) {
   parsedHypo = parseHypothesis(hypothesis);
   colorPrompt(readingPrompt, parsedHypo);
   blinkCursor();
-  var maindiv = document.getElementById("main");
+  var leftdiv = document.getElementById("leftside");
   var promptline = document.getElementById("promptline");
   var hider = document.getElementById('prompthider');
-  hider.style.width = promptline.offsetWidth +"px";
-  hider.style.height = maindiv.offsetHeight +"px";
+  hider.style.width = leftdiv.offsetWidth +"px";
+  hider.style.height = leftdiv.offsetHeight +"px";
   hider.classList.add("show");
   validate(hypothesis, parsedHypo);
 }
 
 function validate(hypothesis, parsedHypothesis) {
   var HTMLList = readingPrompt.getHTMLList();
+  var jumps = 0;
+  var lastcorrect = -1;
+  var garbages = 0;
+  var truncations = 0;
+  var hypolist = hypothesis.split(/(\s+)/).filter( function(x) {return x.trim().length > 0;});
+  var formattedHypo = '';
+  var latestOccurences = {};
+  for (var i = 0; i < hypolist.length; i++) {
+    if (hypolist[i] === '<garbage>') {
+      garbages += 1;
+      formattedHypo += ' <span class="spn">[spoken noise]</span>'
+      continue
+    }
+    else if (hypolist[i].split(':')[0] === 'trunc') {
+      index = hypolist[i].split('@')[1]
+      formattedHypo += ' <span class="trunc">[truncated ' + readingPrompt.getBareWordAtIndex(index) + ']</span>';
+      truncations += 1;
+      continue
+    }
+    else if (lastcorrect + 1 !== parseInt(hypolist[i].split('@')[1])) {
+      formattedHypo += ' <span class="jump">[jump]</span>';
+      jumps += 1;
+    }
+    index = hypolist[i].split('@')[1]
+    formattedHypo += ' <span class="correct">' + readingPrompt.getBareWordAtIndex(index) + '</span>';
+    lastcorrect = parseInt(hypolist[i].split('@')[1]);
+  }
   for (index = 0; index < HTMLList.length; index++) {
     cls = getReadingClassByIndex(parsedHypothesis, index);
     if (cls !== 'correct') {
       console.log("Reject")
-      showRejected('All words were not found');
+      showRejected('All words were not found', formattedHypo);
       return;
     }
   } 
+  if (jumps > 5) {
+    console.log("Reject");
+    showRejected('Too many miscues detected, recognition is unreliable', formattedHypo);
+    return;
+  }
+  if (garbages > 10) {
+    console.log("Reject");
+    showRejected('Too much spoken noise detected, recognition is unreliable', formattedHypo);
+    return;
+  }
   console.log("Accept")
-  showAccepted();
+  showAccepted(formattedHypo);
 }
 
-function showRejected(reasontext) {
+function showRejected(reasontext, formattedHypo) {
   var popup = document.getElementById('popup');
   popup.innerHTML = "";
   var verdict = document.createElement('div');
   verdict.innerHTML = '<h2>Utterance rejected</h2>';
   var reason = document.createElement('div');
   reason.innerHTML = reasontext;
+  var line = document.createElement('div');
+  line.innerHTML = '<hr class="promptline">';
+  var hypo = document.createElement('div');
+  hypo.innerHTML = formattedHypo;
   popup.appendChild(verdict);
   popup.appendChild(reason);
+  popup.appendChild(line);
+  popup.appendChild(hypo);
   popup.classList.add("show");
 }
 
-function showAccepted() {
+function showAccepted(formattedHypo) {
   var popup = document.getElementById('popup');
   popup.innerHTML = "";
   var verdict = document.createElement('div');
   verdict.innerHTML = '<h2>Utterance accepted</h2>';
+  var line = document.createElement('div');
+  line.innerHTML = '<hr/>';
+  var hypo = document.createElement('div');
+  hypo.innerHTML = formattedHypo;
   popup.appendChild(verdict);
+  popup.appendChild(line);
+  popup.appendChild(hypo);
   popup.classList.add("show");
 }
 
@@ -301,19 +354,74 @@ function stopTracking() {
   setInstruction("Waiting for final recogniser output.")
 }
 
+function setupCustomPrompt(text, xhttp) {
+  speechTracking = false;
+  validating = false;
+  cursorPos = 0;
+  writingCustom = false;
+  readingPrompt.loadText(text);
+  setupPromptDiv(readingPrompt);
+  setInstruction('Custom prompt graph ready. Press and hold <span class="teletype">&lt;space&gt;</span>');
+  dictate.getConfig()["graph_id"] = "custom";
+}
+
+function createCustomPromptGraph(text) {
+  setInstruction("Waiting for the decoging graph compilation");
+  var xhttp = new XMLHttpRequest();
+  xhttp.onreadystatechange = function() {
+    if (this.readyState == 4 && this.status == 200) {
+      if (this.responseText == "FAILED") {
+        setInstruction("Graph creation failed. Sorry.")
+      }
+      else {
+        setupCustomPrompt(text, this);
+      }
+    }
+  };
+  xhttp.open("POST", "/custom-graph", true)
+  xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+  xhttp.send("text="+text);
+}
+
+function makeYourOwn() {
+  var hider = document.getElementById('prompthider');
+  hider.classList.remove('show');
+  var popup = document.getElementById('popup');
+  popup.classList.remove('show');
+
+  console.log("Started making my own prompt.");
+  setInstruction("Write your prompt and press enter.");
+  var promptdiv = document.getElementById('prompt');
+  promptdiv.innerHTML = "";
+  var promptEntry = document.createElement('INPUT');
+  promptEntry.setAttribute("type", "textarea");
+  promptEntry.classList.add("promptEntry");
+  promptEntry.onkeydown = function(evt) {
+    if (evt.keyCode == 13) {
+      createCustomPromptGraph(promptEntry.value)
+      return false;
+    }
+  };
+  promptdiv.appendChild(promptEntry);
+  promptEntry.focus();
+  writingCustom = true;
+}
+
+
+
 document.onkeydown = function(evt) {
   evt = evt || window.event;
-  if (evt.keyCode == 32 && !speechTracking && !validating) {
+  if (evt.keyCode == 32 && !speechTracking && !validating && !writingCustom) {
     startTracking();
   }
 };
 
 document.onkeyup = function(evt) {
   evt = evt || window.event;
-  if (evt.keyCode == 32 && speechTracking && !validating) {
+  if (evt.keyCode == 32 && speechTracking && !validating && !writingCustom) {
     stopTracking();
   }
-  else if (evt.keyCode == 32 && !validating) {
+  else if (evt.keyCode == 32 && !validating && !writingCustom) {
     setInstruction('Press and hold <span class="teletype">&lt;space&gt;</span>')
   }
 };
