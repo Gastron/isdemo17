@@ -174,12 +174,12 @@ function validate(hypothesis, parsedHypothesis) {
   } 
   if (jumps > 5) {
     console.log("Reject");
-    showRejected('Too many miscues detected, recognition is unreliable', formattedHypo);
+    showRejected('Too many miscues detected', formattedHypo);
     return;
   }
   if (garbages > 10) {
     console.log("Reject");
-    showRejected('Too much spoken noise detected, recognition is unreliable', formattedHypo);
+    showRejected('Too much spoken noise detected', formattedHypo);
     return;
   }
   console.log("Accept")
@@ -190,7 +190,7 @@ function showRejected(reasontext, formattedHypo) {
   var popup = document.getElementById('popup');
   popup.innerHTML = "";
   var verdict = document.createElement('div');
-  verdict.innerHTML = '<h2 class="boo">Utterance rejected</h2>';
+  verdict.innerHTML = '<h2 class="boo">Utterance rejected from automatic analysis</h2>';
   var reason = document.createElement('div');
   reason.innerHTML = reasontext;
   var line = document.createElement('div');
@@ -206,7 +206,7 @@ function showAccepted(formattedHypo) {
   var popup = document.getElementById('popup');
   popup.innerHTML = "";
   var verdict = document.createElement('div');
-  verdict.innerHTML = '<h2 class="yeah">Utterance accepted</h2>';
+  verdict.innerHTML = '<h2 class="yeah">Utterance validated for automatic analysis</h2>';
   var line = document.createElement('div');
   line.innerHTML = '<hr/>';
   popup.appendChild(verdict);
