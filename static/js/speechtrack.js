@@ -59,9 +59,9 @@ var prompts = {1: {text: "En dag började solen och vinden bråka om vem av dem 
 
 
 var dictate = new Dictate({
-  server : "ws://localhost:8888/client/ws/speech",
-  serverStatus : "ws://localhost:8888/client/ws/status",
-  recorderWorkerPath : 'static/js/recorderWorker.js',
+  server : "wss://digitala.aalto.fi/is17-asr/client/ws/speech",
+  serverStatus : "wss://digitala.aalto.fi/is17-asr/client/ws/status",
+  recorderWorkerPath : 'is17/static/js/recorderWorker.js',
   graph_id : "testphrase",
   onPartialResults : function(hypos) {
     bestHypothesis = hypos[0].transcript;

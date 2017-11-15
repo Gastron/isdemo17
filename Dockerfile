@@ -1,7 +1,13 @@
 FROM debian:jessie
 MAINTAINER Aku Rouhe "aku.rouhe@aalto.fi"
-RUN apt-get update -y
-RUN apt-get install -y python python-pip python-dev build-essential
+RUN apt-get update -y && apt-get install -y \
+  build-essential \
+  python \
+  python-dev \
+  python-pip && \
+  apt-get clean autoclean && \
+  apt-get autoremove -y 
+
 COPY . /app
 WORKDIR /app
 RUN pip install -r requirements.txt
