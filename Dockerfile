@@ -8,8 +8,8 @@ RUN apt-get update -y && apt-get install -y \
   apt-get clean autoclean && \
   apt-get autoremove -y 
 
-COPY . /app
 WORKDIR /app
+COPY requirements.txt /app/
 RUN pip install -r requirements.txt
 ENV FLASK_APP=routing.py
 ENTRYPOINT ["python", "-m", "flask", "run", "--host=0.0.0.0"]

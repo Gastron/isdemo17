@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <base href="https://digitala.aalto.fi/is17">
+    <title>Digitala InterSpeech 2017 Demo</title>
+    <link rel="stylesheet" href="https://digitala.aalto.fi/is17/static/normalize.css">
+    <link rel="stylesheet" href="https://digitala.aalto.fi/is17/static/style.css">
+  </head>
+  <body>
+    <div id="leftside">
+      <div class="main" id="main">
+        {% block main %}
+        <h1>Reading validation for pronunciation evaluation in the Digitala project</h1>
+        {% endblock %}
+      </div>
+    </div>
+    <div id="rightside">
+      {% block side %}
+      Hello
+      {% endblock %}
+    </div>
+  </body>
+</html>
