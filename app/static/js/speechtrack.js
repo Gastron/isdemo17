@@ -61,7 +61,7 @@ var prompts = {1: {text: "En dag började solen och vinden bråka om vem av dem 
 var dictate = new Dictate({
   server : "wss://digitala.aalto.fi/is17-asr/client/ws/speech",
   serverStatus : "wss://digitala.aalto.fi/is17-asr/client/ws/status",
-  recorderWorkerPath : 'is17/static/js/recorderWorker.js',
+  recorderWorkerPath : '/is17/static/js/recorderWorker.js',
   graph_id : "testphrase",
   onPartialResults : function(hypos) {
     bestHypothesis = hypos[0].transcript;
@@ -86,8 +86,8 @@ function setupPrompt(number) {
   validating = false;
   cursorPos = 0;
   writingCustom = false;
-  var hider = document.getElementById('prompthider');
-  hider.classList.remove('show');
+  //var hider = document.getElementById('prompthider');
+  //hider.classList.remove('show');
   var popup = document.getElementById('popup');
   popup.classList.remove('show');
   readingPrompt.loadText(prompts[number].text);
@@ -95,7 +95,7 @@ function setupPrompt(number) {
   setInstruction('Press and hold <span class="teletype">&lt;space&gt;</span>');
   dictate.getConfig()["graph_id"] = prompts[number].graph_id;
 }
-setupPrompt(1);
+setupPrompt(prompt_num);
 
 /* callbacks for dictate */
 function __processHypothesis(hypothesis) {
@@ -110,12 +110,13 @@ function startValidating(hypothesis) {
   parsedHypo = parseHypothesis(hypothesis);
   colorPrompt(readingPrompt, parsedHypo);
   blinkCursor();
-  var leftdiv = document.getElementById("leftside");
-  var promptline = document.getElementById("promptline");
-  var hider = document.getElementById('prompthider');
-  hider.style.width = leftdiv.offsetWidth +"px";
-  hider.style.height = leftdiv.offsetHeight +"px";
-  hider.classList.add("show");
+  /*var hider = document.getElementById('prompthider');
+  hider.classList.add("show");*/
+  var HTMLList = readingPrompt.getHTMLList();
+  for (index = 0; index < HTMLList.length; index++) {
+    HTMLList[index].wordSpan.classList.add('validating')
+  }
+  document.getElementById("readbutton").classList.add("pure-button-disabled")
   validate(hypothesis, parsedHypo);
 }
 
@@ -190,15 +191,15 @@ function showRejected(reasontext, formattedHypo) {
   var popup = document.getElementById('popup');
   popup.innerHTML = "";
   var verdict = document.createElement('div');
-  verdict.innerHTML = '<h2 class="boo">Utterance rejected from automatic analysis</h2>';
+  verdict.innerHTML = '<h2 class="boo">Validation: reject</h2>';
   var reason = document.createElement('div');
   reason.innerHTML = reasontext;
   var line = document.createElement('div');
   line.innerHTML = '<hr class="promptline">';
   popup.appendChild(verdict);
   popup.appendChild(reason);
-  popup.appendChild(line);
-  popup.appendChild(formattedHypo);
+  //popup.appendChild(line);
+  //popup.appendChild(formattedHypo);
   popup.classList.add("show");
 }
 
@@ -206,12 +207,12 @@ function showAccepted(formattedHypo) {
   var popup = document.getElementById('popup');
   popup.innerHTML = "";
   var verdict = document.createElement('div');
-  verdict.innerHTML = '<h2 class="yeah">Utterance validated for automatic analysis</h2>';
+  verdict.innerHTML = '<h2 class="yeah">Validation: accept</h2>';
   var line = document.createElement('div');
   line.innerHTML = '<hr/>';
   popup.appendChild(verdict);
-  popup.appendChild(line);
-  popup.appendChild(formattedHypo);
+  //popup.appendChild(line);
+  //popup.appendChild(formattedHypo);
   popup.classList.add("show");
 }
 
@@ -298,7 +299,7 @@ function blinkCursor() {
     lastSpace.classList.remove('blink');
   }
 }
-window.setInterval(blinkCursor, 200);
+window.setInterval(blinkCursor, 300);
 
 function parseHypothesis(hypothesis) {
   var parsed = {correctInds: new Set(), truncInds: new Set(), missedInds: new Set(), cursor: 0};
@@ -334,8 +335,10 @@ function parseHypothesis(hypothesis) {
 }
 
 function setInstruction(text) {
-  instruction = document.getElementById('instruction');
-  instruction.innerHTML = text;
+  //Disabled for now:
+  return;
+  //instruction = document.getElementById('instruction');
+  //instruction.innerHTML = text;
 }
 
 function startTracking() {
@@ -396,8 +399,8 @@ function createCustomPromptGraph(text) {
 }
 
 function makeYourOwn() {
-  var hider = document.getElementById('prompthider');
-  hider.classList.remove('show');
+  //var hider = document.getElementById('prompthider');
+  //hider.classList.remove('show');
   var popup = document.getElementById('popup');
   popup.classList.remove('show');
 
@@ -423,8 +426,11 @@ function makeYourOwn() {
 
 document.onkeydown = function(evt) {
   evt = evt || window.event;
-  if (evt.keyCode == 32 && !speechTracking && !validating && !writingCustom) {
-    startTracking();
+  if (evt.keyCode == 32) { 
+    if (!speechTracking && !validating && !writingCustom) {
+      startTracking();
+    }
+    return false;
   }
 };
 
@@ -449,4 +455,16 @@ function stopListening() {
 
 window.onload = function() {
   dictate.init();
+  btn = document.getElementById("readbutton");
+  btn.onmousedown = btn.ontouchstart = function(evt) {
+    if (!speechTracking && !validating && !writingCustom) {
+      startTracking();
+    }
+  }
+  btn.onmouseup = btn.ontouchend = function(evt) {
+    if (speechTracking && !validating && !writingCustom) {
+      stopTracking();
+    }
+  }
+  
 }

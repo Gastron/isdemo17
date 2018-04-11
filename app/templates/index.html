@@ -1,24 +1,26 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <base href="https://digitala.aalto.fi/is17">
-    <title>Digitala InterSpeech 2017 Demo</title>
-    <link rel="stylesheet" href="https://digitala.aalto.fi/is17/static/normalize.css">
-    <link rel="stylesheet" href="https://digitala.aalto.fi/is17/static/style.css">
-  </head>
-  <body>
-    <div id="leftside">
-      <div class="main" id="main">
-        {% block main %}
-        <h1>Reading validation for pronunciation evaluation in the Digitala project</h1>
-        {% endblock %}
-      </div>
-    </div>
-    <div id="rightside">
-      {% block side %}
-      Hello
-      {% endblock %}
-    </div>
-  </body>
-</html>
+{% extends "main.html" %}
+{% block main %}
+<div id=explain>
+  <div class="howto">
+    <h2>Read Swedish</h2>
+    <p> This is a demo. It has you reading some Swedish text aloud. Use it for practice, use it for fun, use it to see how the tracking and validation works. 
+    <h2>How to:</h2>
+    <ul>
+      <li> For now, the demo doesn't work on mobile devices or the Safari browser.
+      <li> Use with a headset microphone in a quiet space for the best performance.
+      <li> Hold the button. You can also hold space instead.
+      <li> Read the text aloud. 
+      <li> The speech recogniser tracks you as you read: it's like karaoke.
+      <li> When you've finished reading release the button or space.
+      <li> The system validates the result: it tells you if it thinks your utterance was suitable for automatic processing.
+    </ul>
+    <h2>Language is a cooperative game:</h2>
+    <p> The point is to track your reading as accurately as possible. The system does not judge your ability. 
+    <p> The validation filters out recordings which are unsuitable for further automatic processing, such as automatic evaluation. An error free recognition result indicates cooperation from both the reader and the computer.
+  </br>
+  </br>
+  <a href="https://digitala.aalto.fi/is17/speechtrack/1" class="pure-button" id=startbutton>Begin</a>
+  </div>
+</div>
+{% include "footer.html" %}
+{% endblock %}

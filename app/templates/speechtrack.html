@@ -1,34 +1,38 @@
-{% extends "index.html" %}
+{% extends "main.html" %}
 {% block main %}
-  <div id="popup" class="popup">
-  </div>
-  <div id="prompthider" class="hider"></div>
-  <div id="prompt">
-    The prompt is displayed here.
-  </div> 
-  <hr class="promptline" id="promptline">
-  <div id="instruction">
-  Press and hold <span class="teletype">&lt;space&gt;</span>
+<div id="wrapper">
+  <!--<div id="prompthider" class="hider"></div>-->
+  <div id="promptmain">
+    <div id="popup" class="popup"></div>
+    <div id="prompt">
+      The prompt is displayed here.
+    </div> 
+    <hr class="promptline" id="promptline">
+    <!--<div id="instruction">
+    Press and hold <span class="teletype">&lt;space&gt;</span>
+    </div>-->
+    <div id=controlbuttons>
+      {% if promptnum is eq(1) %}
+        <a class="pure-button ctrl" id="leftbutton" 
+          href="https://digitala.aalto.fi/is17/">←</a>
+      {% else %}
+        <a class="pure-button ctrl" id="leftbutton" 
+          href="https://digitala.aalto.fi/is17/speechtrack/{{ promptnum-1 }}">←</a>
+      {% endif %}
+    <button class="pure-button ctrl" id="readbutton">Hold to read</button>
+      {% if promptnum is eq(3) %}
+        <button class="pure-button ctrl pure-button-disabled" id="rightbutton">→</button>
+      {% else %}
+        <a class="pure-button ctrl" id="rightbutton" 
+          href="https://digitala.aalto.fi/is17/speechtrack/{{ promptnum+1 }}">→</a>
+      {% endif %}
+    </div>
   </div>
   <script src="https://digitala.aalto.fi/is17/static/js/dictate.js"></script>
   <script src="https://digitala.aalto.fi/is17/static/js/recorder.js"></script>
   <script src="https://digitala.aalto.fi/is17/static/js/recorderWorker.js"></script>
+  <script> var prompt_num = {{ promptnum }} </script>
   <script src="https://digitala.aalto.fi/is17/static/js/speechtrack.js"></script>
-{% endblock %}
-{% block side %}
-<div class="switchcolumn">
-  <div class="switcher" onclick="setupPrompt(1)">
-    <span class="switchtext">En dag började solen och vinden bråka om vem av dem som var starkast.</span>
-  </div>
-  <div class="switcher" onclick="setupPrompt(2)">
-    <span class="switchtext">Taligenkänning kallas processen att elektroniskt eller datatekniskt tolka mänskligt, naturligt tal.</span>
-  </div>
-  <div class="switcher" onclick="setupPrompt(3)">
-    <span class="switchtext">Hej Peter! Jag försökte ringa dig, men din mobil var avstängd. Var är du?! Hoppas att du hör mitt meddelande snart. Eva ligger på sjukhus. Hon råkade ut för en bilolycka i morse, men det är ingen fara med henne.</span>
-  </div>
-  {# <div class="switcher makeown" onclick="makeYourOwn()">
-    <span class="switchtext">Write your own prompt</span>
-  </div> #}
 </div>
-
+{% include "footer.html" %}
 {% endblock %}
